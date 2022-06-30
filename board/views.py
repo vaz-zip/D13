@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.views.generic import ListView, UpdateView, CreateView, DetailView, DeleteView, FormView
+from django.views.generic import ListView, UpdateView, CreateView, DetailView, DeleteView  # , FormView
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
@@ -9,8 +9,7 @@ from django.urls import reverse
 from .models import Post, Feedback
 from .forms import PostForm, FeedbackForm, ResponsesFilterForm
 
-
-# from .tasks import respond_send_email, respond_accept_send_email
+from .tasks import respond_send_email, respond_accept_send_email
 
 
 class Index(ListView):
@@ -138,7 +137,7 @@ def response_accept(request, **kwargs):
         response = Feedback.objects.get(id=kwargs.get('pk'))
         response.status = True
         response.save()
-        # respond_accept_send_email.delay(response_id=response.id)
+        respond_accept_send_email.delay(response_id=response.id)
         return HttpResponseRedirect('/responses')
     else:
         return HttpResponseRedirect('/accounts/login')
@@ -168,5 +167,5 @@ class Respond(LoginRequiredMixin, CreateView):  #
         respond.author = User.objects.get(id=self.request.user.id)
         respond.post = Post.objects.get(id=self.kwargs.get('pk'))
         respond.save()
-        # respond_send_email.delay(respond_id=respond.id)
+        respond_send_email.delay(respond_id=respond.id)
         return redirect(f'/post/{self.kwargs.get("pk")}')
